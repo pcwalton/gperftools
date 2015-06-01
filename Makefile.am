@@ -370,8 +370,16 @@ noinst_LTLIBRARIES += libstacktrace.la
 libstacktrace_la_SOURCES = src/stacktrace.cc \
                            src/base/elf_mem_image.cc \
                            src/base/vdso_support.cc \
+                           src/third_party/mcternan_unwinder/unwarm_arm.c \
+                           src/third_party/mcternan_unwinder/unwarm.c \
+                           src/third_party/mcternan_unwinder/unwarm.h \
+                           src/third_party/mcternan_unwinder/unwarminder.c \
+                           src/third_party/mcternan_unwinder/unwarminder.h \
+                           src/third_party/mcternan_unwinder/unwarmmem.c \
+                           src/third_party/mcternan_unwinder/unwarmmem.h \
+                           src/third_party/mcternan_unwinder/unwarm_thumb.c \
                            $(STACKTRACE_INCLUDES)
-libstacktrace_la_LIBADD = $(UNWIND_LIBS) $(LIBSPINLOCK)
+libstacktrace_la_LIBADD = $(UNWIND_LIBS) $(LIBSPINLOCK) -ldl -lelf
 STACKTRACE_SYMBOLS = '(GetStackTrace|GetStackFrames|GetStackTraceWithContext|GetStackFramesWithContext)'
 libstacktrace_la_LDFLAGS = -export-symbols-regex $(STACKTRACE_SYMBOLS) $(AM_LDFLAGS)
 
@@ -383,7 +391,7 @@ STACKTRACE_UNITTEST_INCLUDES = src/config_for_unittests.h \
                                $(LOGGING_INCLUDES)
 stacktrace_unittest_SOURCES = src/tests/stacktrace_unittest.cc \
                               $(STACKTRACE_UNITTEST_INCLUDES)
-stacktrace_unittest_LDADD = libstacktrace.la liblogging.la
+stacktrace_unittest_LDADD = libstacktrace.la liblogging.la -ldl -lelf
 
 ### Documentation
 dist_doc_DATA +=
@@ -485,7 +493,7 @@ libtcmalloc_minimal_internal_la_CXXFLAGS = -DNO_TCMALLOC_SAMPLES \
                                            $(PTHREAD_CFLAGS) -DNDEBUG \
                                            $(AM_CXXFLAGS) $(NO_EXCEPTIONS)
 libtcmalloc_minimal_internal_la_LDFLAGS = $(PTHREAD_CFLAGS) $(AM_LDFLAGS)
-libtcmalloc_minimal_internal_la_LIBADD = $(PTHREAD_LIBS) $(LIBSPINLOCK) libmaybe_threads.la
+libtcmalloc_minimal_internal_la_LIBADD = $(PTHREAD_LIBS) $(LIBSPINLOCK) libmaybe_threads.la -ldl -lelf
 
 lib_LTLIBRARIES += libtcmalloc_minimal.la
 WINDOWS_PROJECTS += vsprojects/libtcmalloc_minimal/libtcmalloc_minimal.vcproj
@@ -494,7 +502,7 @@ libtcmalloc_minimal_la_CXXFLAGS = -DNO_TCMALLOC_SAMPLES \
                                   $(PTHREAD_CFLAGS) -DNDEBUG $(AM_CXXFLAGS)
 # -version-info gets passed to libtool
 libtcmalloc_minimal_la_LDFLAGS = $(PTHREAD_CFLAGS) -version-info @TCMALLOC_SO_VERSION@ $(AM_LDFLAGS)
-libtcmalloc_minimal_la_LIBADD = libtcmalloc_minimal_internal.la $(PTHREAD_LIBS)
+libtcmalloc_minimal_la_LIBADD = libtcmalloc_minimal_internal.la $(PTHREAD_LIBS) -ldl -lelf
 
 # For windows, we're playing around with trying to do some stacktrace
 # support even with libtcmalloc_minimal.  For everyone else, though,
@@ -895,7 +903,7 @@ lib_LTLIBRARIES += libtcmalloc.la
 libtcmalloc_la_SOURCES = $(TCMALLOC_CC) $(TCMALLOC_INCLUDES)
 libtcmalloc_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG $(AM_CXXFLAGS)
 libtcmalloc_la_LDFLAGS = $(PTHREAD_CFLAGS) -version-info @TCMALLOC_SO_VERSION@
-libtcmalloc_la_LIBADD = libtcmalloc_internal.la libmaybe_threads.la $(PTHREAD_LIBS)
+libtcmalloc_la_LIBADD = libtcmalloc_internal.la libmaybe_threads.la $(PTHREAD_LIBS) -ldl -lelf
 
 if WITH_HEAP_CHECKER
 # heap-checker-bcad is last, in hopes its global ctor will run first.
@@ -1179,7 +1187,7 @@ noinst_PROGRAMS += heap-profiler_debug_unittest
 heap_profiler_debug_unittest_SOURCES = $(heap_profiler_unittest_SOURCES)
 heap_profiler_debug_unittest_CXXFLAGS = $(heap_profiler_unittest_CXXFLAGS)
 heap_profiler_debug_unittest_LDFLAGS = $(heap_profiler_unittest_LDFLAGS)
-heap_profiler_debug_unittest_LDADD = libtcmalloc_debug.la $(PTHREAD_LIBS)
+heap_profiler_debug_unittest_LDADD = libtcmalloc_debug.la $(PTHREAD_LIBS) -ldl -lelf
 
 endif WITH_HEAP_PROFILER
 
@@ -1257,14 +1265,14 @@ profiledata_unittest_SOURCES = src/tests/profiledata_unittest.cc \
                                src/base/commandlineflags.h \
                                src/base/logging.h \
                                src/base/basictypes.h
-profiledata_unittest_LDADD = $(LIBPROFILER)
+profiledata_unittest_LDADD = $(LIBPROFILER) -ldl -lelf
 
 TESTS += profile_handler_unittest
 profile_handler_unittest_SOURCES = src/tests/profile-handler_unittest.cc \
                                    src/profile-handler.h
 profile_handler_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 profile_handler_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
-profile_handler_unittest_LDADD = $(LIBPROFILER) $(PTHREAD_LIBS)
+profile_handler_unittest_LDADD = $(LIBPROFILER) $(PTHREAD_LIBS) -ldl -lelf
 
 TESTS += profiler_unittest.sh$(EXEEXT)
 profiler_unittest_sh_SOURCES = src/tests/profiler_unittest.sh
@@ -1285,20 +1293,20 @@ PROFILER_UNITTEST_SRCS = src/tests/profiler_unittest.cc \
                          $(PROFILER_UNITTEST_INCLUDES)
 profiler1_unittest_SOURCES = $(PROFILER_UNITTEST_SRCS)
 profiler1_unittest_CXXFLAGS = -g -DNO_THREADS $(AM_CXXFLAGS)
-profiler1_unittest_LDADD = $(LIBPROFILER)
+profiler1_unittest_LDADD = $(LIBPROFILER) -ldl -lelf
 profiler2_unittest_SOURCES = $(PROFILER_UNITTEST_SRCS)
 profiler2_unittest_CXXFLAGS = -g -DNO_THREADS $(AM_CXXFLAGS)
-profiler2_unittest_LDADD = -lstacktrace -lprofiler
+profiler2_unittest_LDADD = -lstacktrace -lprofiler -ldl -lelf
 # We depend on -lprofiler but haven't yet said how to build it.  Do so now.
 profiler2_unittest_DEPENDENCIES = $(LIBPROFILER)
 profiler3_unittest_SOURCES = $(PROFILER_UNITTEST_SRCS)
 profiler3_unittest_CXXFLAGS = -g $(PTHREAD_CFLAGS) $(AM_CXXFLAGS)
 profiler3_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
-profiler3_unittest_LDADD = $(LIBPROFILER) $(PTHREAD_LIBS)
+profiler3_unittest_LDADD = $(LIBPROFILER) $(PTHREAD_LIBS) -ldl -lelf
 profiler4_unittest_SOURCES = $(PROFILER_UNITTEST_SRCS)
 profiler4_unittest_CXXFLAGS = -g $(PTHREAD_CFLAGS) $(AM_CXXFLAGS)
 profiler4_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
-profiler4_unittest_LDADD = -lstacktrace -lprofiler $(PTHREAD_LIBS)
+profiler4_unittest_LDADD = -lstacktrace -lprofiler $(PTHREAD_LIBS) -ldl -lelf
 # We depend on -lprofiler but haven't yet said how to build it.  Do so now.
 profiler4_unittest_DEPENDENCIES = $(LIBPROFILER)
 

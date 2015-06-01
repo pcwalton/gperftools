@@ -4841,6 +4841,12 @@ sub MapToSymbols {
     return;
   }
 
+  # FIXME(pcwalton): If we're on ARMv7, this addr2line code is busted. Ignore it.
+  if (`uname -m` =~ /armv7l/) {
+    MapSymbolsWithNM($image, $offset, $pclist, $symbols);
+    return;
+  }
+
   # "addr2line -i" can produce a variable number of lines per input
   # address, with no separator that allows us to tell when data for
   # the next address starts.  So we find the address for a special

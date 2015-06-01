@@ -81,6 +81,7 @@ struct GetStackImplementation {
   const char *name;
 };
 
+#define HAVE_DECL_BACKTRACE 1
 #if HAVE_DECL_BACKTRACE
 #define STACKTRACE_INL_HEADER "stacktrace_generic-inl.h"
 #define GST_SUFFIX generic
@@ -124,7 +125,7 @@ struct GetStackImplementation {
 #endif
 
 #if defined(__arm__)
-#define STACKTRACE_INL_HEADER "stacktrace_arm-inl.h"
+#define STACKTRACE_INL_HEADER "stacktrace_arm-mcternan-inl.h"
 #define GST_SUFFIX arm
 #include "stacktrace_impl_setup-inl.h"
 #undef GST_SUFFIX
@@ -185,7 +186,9 @@ static GetStackImplementation *all_impls[] = {
 #endif
 #endif
 
-#if defined(HAVE_GST_instrument)
+#if defined(TCMALLOC_PREFER_GENERIC)
+static GetStackImplementation *get_stack_impl = &impl__generic;
+#elif defined(HAVE_GST_instrument)
 static GetStackImplementation *get_stack_impl = &impl__instrument;
 #elif defined(HAVE_GST_win32)
 static GetStackImplementation *get_stack_impl = &impl__win32;
@@ -193,10 +196,10 @@ static GetStackImplementation *get_stack_impl = &impl__win32;
 static GetStackImplementation *get_stack_impl = &impl__x86;
 #elif defined(HAVE_GST_ppc) && defined(TCMALLOC_DONT_PREFER_LIBUNWIND)
 static GetStackImplementation *get_stack_impl = &impl__ppc;
-#elif defined(HAVE_GST_libunwind)
-static GetStackImplementation *get_stack_impl = &impl__libunwind;
 #elif defined(HAVE_GST_arm)
 static GetStackImplementation *get_stack_impl = &impl__arm;
+#elif defined(HAVE_GST_libunwind)
+static GetStackImplementation *get_stack_impl = &impl__libunwind;
 #elif defined(HAVE_GST_generic)
 static GetStackImplementation *get_stack_impl = &impl__generic;
 #elif 0
@@ -207,7 +210,7 @@ static GetStackImplementation *get_stack_impl = &impl__generic;
 # include "stacktrace_generic-inl.h"
 # include "stacktrace_powerpc-inl.h"
 # include "stacktrace_win32-inl.h"
-# include "stacktrace_arm-inl.h"
+# include "stacktrace_armnew-inl.h"
 # include "stacktrace_instrument-inl.h"
 #else
 #error Cannot calculate stack trace: will need to write for your environment
